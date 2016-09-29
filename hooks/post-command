@@ -1,0 +1,66 @@
+#!/bin/bash
+
+
+eval $(env | grep 'BUILDKITE_PLUGIN_HOCKEYAPP_UPLOAD_BUILDKITE_PLUGIN_' | sed 's/BUILDKITE_PLUGIN_HOCKEYAPP_UPLOAD_BUILDKITE_PLUGIN_/BUILDKITE_PLUGIN_HOCKEYAPP_UPLOAD_/g' | sed 's/^/export /')
+
+
+BUILDKITE_PLUGIN_HOCKEYAPP_UPLOAD_API_TOKEN_FROM=${BUILDKITE_PLUGIN_HOCKEYAPP_UPLOAD_API_TOKEN_FROM:-HOCKEYAPP_API_TOKEN}
+API_TOKEN=${BUILDKITE_PLUGIN_HOCKEYAPP_UPLOAD_API_TOKEN-}
+if [[ -z "${API_TOKEN}" ]]; then
+	API_TOKEN=$(eval "echo \$$BUILDKITE_PLUGIN_HOCKEYAPP_UPLOAD_API_TOKEN_FROM")
+fi
+if [[ -z "${API_TOKEN-}" ]]; then
+	echo '[!] HockeyApp API token required'
+	exit 1
+fi
+
+BUILDKITE_PLUGIN_HOCKEYAPP_UPLOAD_APP_ID_FROM=${BUILDKITE_PLUGIN_HOCKEYAPP_UPLOAD_APP_ID_FROM:-HOCKEYAPP_APP_ID}
+APP_ID=${BUILDKITE_PLUGIN_HOCKEYAPP_UPLOAD_APP_ID-}
+if [[ -z "${APP_ID}" ]]; then
+	APP_ID=$(eval "echo \$$BUILDKITE_PLUGIN_HOCKEYAPP_UPLOAD_APP_ID_FROM")
+fi
+if [[ -z "${APP_ID-}" ]]; then
+	echo '[!] HockeyApp Application ID required'
+	exit 1
+fi
+
+if [[ -z "${BUILDKITE_PLUGIN_HOCKEYAPP_UPLOAD_PATH_IPA-}" ]]; then
+	echo '[!] .ipa filename required'
+	exit 1
+fi
+
+
+CURL_DSYM=""
+if [[ ! -z "${BUILDKITE_PLUGIN_HOCKEYAPP_UPLOAD_PATH_DSYM_ZIP-}" ]]; then
+	CURL_DSYM="-F "dsym=@${BUILDKITE_PLUGIN_HOCKEYAPP_UPLOAD_PATH_DSYM_ZIP}""
+fi
+
+CURL_REPOSITORY_URL=""
+if [[ "${BUILDKITE_PULL_REQUEST_REPO-}" == "git:*" ]]; then
+	CURL_REPOSITORY_URL=-F "repository_url=${BUILDKITE_PULL_REQUEST_REPO/#git:/https:}"
+elif [[ "${BUILDKITE_PULL_REQUEST_REPO-}" == "https:*" ]]; then
+	CURL_REPOSITORY_URL=-F "repository_url=${BUILDKITE_PULL_REQUEST_REPO}"
+fi
+
+CURL_NOTIFY=""
+if [[ "${BUILDKITE_PLUGIN_HOCKEYAPP_UPLOAD_NOTIFY-false}" == "true" ]]; then
+	CURL_NOTIFY=-F "notify=1"
+fi
+
+curl --fail \
+	-H "X-HockeyAppToken: ${API_TOKEN}" \
+	-F "ipa=@${BUILDKITE_PLUGIN_HOCKEYAPP_UPLOAD_PATH_IPA-}" \
+	${CURL_DSYM} \
+	-F "build_server_url=${BUILDKITE_BUILD_URL-}" \
+	${CURL_REPOSITORY_URL} \
+	-F "commit_sha=${BUILDKITE_COMMIT-}" \
+	-F "status=2" \
+	${CURL_NOTIFY} \
+	"https://rink.hockeyapp.net/api/2/apps/${APP_ID}/app_versions/upload"
+
+if [[ "$?" -ne 0 ]]; then
+    echo '[!] HockeyApp upload failed'
+    exit 1
+fi
+
+exit 0
