@@ -1,0 +1,9 @@
+{
+    "name": "HockeyApp Upload",
+    "description": "Upload iOS app builds to HockeyApp",
+    "author": "@cysp",
+    "public": true,
+    "requirements": [
+        "bash", "curl"
+    ]
+}
