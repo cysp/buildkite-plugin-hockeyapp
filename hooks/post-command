@@ -36,7 +36,9 @@ if [[ ! -z "${BUILDKITE_PLUGIN_HOCKEYAPP_UPLOAD_PATH_DSYM_ZIP-}" ]]; then
 fi
 
 CURL_REPOSITORY_URL=""
-if [[ "${BUILDKITE_REPO-}" == "git:*" ]]; then
+if [[ "${BUILDKITE_REPO-}" == "git@github.com:*" ]]; then
+	CURL_REPOSITORY_URL=-F "repository_url=${BUILDKITE_REPO/#git@github.com:/https://github.com/}"
+elif [[ "${BUILDKITE_REPO-}" == "git:*" ]]; then
 	CURL_REPOSITORY_URL=-F "repository_url=${BUILDKITE_REPO/#git:/https:}"
 elif [[ "${BUILDKITE_REPO-}" == "https:*" ]]; then
 	CURL_REPOSITORY_URL=-F "repository_url=${BUILDKITE_REPO}"
