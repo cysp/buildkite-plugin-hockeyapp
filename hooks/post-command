@@ -43,7 +43,7 @@ fi
 
 CURL_NOTIFY=""
 if [[ "${BUILDKITE_PLUGIN_HOCKEYAPP_UPLOAD_NOTIFY-false}" == "true" ]]; then
-	CURL_NOTIFY=-F "notify=1"
+	CURL_NOTIFY="-F "notify=1""
 fi
 
 curl --fail \
