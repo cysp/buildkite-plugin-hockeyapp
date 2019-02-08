@@ -11,10 +11,10 @@ steps:
     env:
       HOCKEYAPP_APP_ID: 123456789abcdef
     plugins:
-      hockeyapp-upload:
-        path-ipa: .ci-artifacts/Xyzzy.ipa
-        path-dsym-zip: .ci-artifacts/Xyzzy.app.dSYM.zip
-        notify: true
+      - hockeyapp-upload:
+          path-ipa: .ci-artifacts/Xyzzy.ipa
+          path-dsym-zip: .ci-artifacts/Xyzzy.app.dSYM.zip
+          notify: true
 ```
 
 ## Configuring
